@@ -65,3 +65,5 @@ caches/
 Thumbs.db
 .idea/
 .vscode/
+
+./edge-agent/videos/

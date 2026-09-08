@@ -1,3 +1,4 @@
+import { edgeToken } from '../security.js';
 
 
 type AgentResponse = {
@@ -21,6 +22,7 @@ async function fetchWithTimeout(
   try {
     return await fetch(url, {
       ...fetchOptions,
+      headers: { ...fetchOptions.headers, Authorization: `Bearer ${edgeToken}` },
       signal: controller.signal,
     });
   } finally {
@@ -28,7 +30,7 @@ async function fetchWithTimeout(
   }
 }
 
-export async function createTask(task: { task_id: number; command: string[] }): Promise<AgentResponse> {
+export async function createTask(task: { task_id: number; operation: 'video_analysis'; video_id: string }): Promise<AgentResponse> {
         const response = await fetchWithTimeout("http://127.0.0.1:8000/task", {
           method: "POST",
           headers: {
@@ -89,6 +91,14 @@ export async function getevents(taskId: string): Promise<AgentResponse> {
 
 export async function getAllTasks(): Promise<AgentResponse> {
         const response = await fetchWithTimeout(`http://127.0.0.1:8000/tasks`);
+        return {
+            status: response.status,
+            body: await response.json()
+        };
+}
+
+export async function list_videos(): Promise<AgentResponse> {
+        const response = await fetchWithTimeout(`http://127.0.0.1:8000/videos`);
         return {
             status: response.status,
             body: await response.json()

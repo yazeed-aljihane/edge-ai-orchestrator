@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "NODE_ENV=development tsx watch src/server.ts",
     "dev:ui": "vite --host 127.0.0.1",
     "build": "tsc && vite build",
     "build:api": "tsc",
@@ -16,10 +16,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@ai-sdk/groq": "^4.0.37",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "ai": "^7.0.93",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "groq-sdk": "^1.6.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "vite": "^8.2.2"
