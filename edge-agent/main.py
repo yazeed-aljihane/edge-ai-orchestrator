@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 
 tasks = {}
+agent_id = "agent_1" 
 async def stop_process(task_id):
     process = tasks[task_id].get("process")
     try:
@@ -43,7 +44,7 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/health")
 async def health():
-    return {"status": "OK"}
+    return {"agent_id": agent_id ,"status": "OK"}
 
 @app.post("/task")
 async def process_task(request: dict):
@@ -103,3 +104,5 @@ async def stop_task(task_id: int):
         else:
             status = "FAILED"
         return JSONResponse({ "status": status, "pid": process.pid, "returncode": process.returncode})
+
+

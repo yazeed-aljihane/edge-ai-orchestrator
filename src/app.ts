@@ -1,5 +1,5 @@
 import express from 'express';
-import { createTask, getTask } from './clients/edge.agent.js';
+import { createTask, getTask, stopTask, getHealth } from './clients/edge.agent.js';
 
 let router = express.Router();
 
@@ -30,5 +30,44 @@ router.get("/task/:task_id", async (req, res) => {
         return res.status(500).json({ error: "Failed to get task" });
     }
 });
+
+router.post("/task/:task_id/stop", async (req, res) => {
+    const { task_id } = req.params;
+
+    try {
+        const agentResponse = await stopTask(task_id);
+        return res.status(agentResponse.status).json(agentResponse.body);
+    } catch (error) {
+        console.error("Error stopping task:", error);
+        return res.status(500).json({ error: "Failed to stop task" });
+    }
+});
+
+router.get("/agent/health", async (req, res) => {
+    try {
+        const agentResponse = await getHealth();
+        return res.status(agentResponse.status).json(agentResponse.body);
+    } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          console.error("Health check request timed out:", error);
+          return res
+            .status(504)
+            .json({ error: "Health check request timed out" });
+        }
+        const cause = error instanceof Error ? error.cause : undefined;
+
+        if (
+          typeof cause === "object" &&
+          cause !== null &&
+          "code" in cause &&
+          cause.code === "ECONNREFUSED"
+        ) {
+          return res.status(502).json({ error: "agent_unavailable" });
+        }
+          console.error("Error getting health:", error);
+        return res.status(500).json({ error: "Failed to get health" });
+    }
+});
+
 
 export { router };
