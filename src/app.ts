@@ -1,5 +1,5 @@
 import express from 'express';
-import { createTask, getTask, stopTask, getHealth } from './clients/edge.agent.js';
+import { createTask, getTask, stopTask, getHealth, getevents } from './clients/edge.agent.js';
 
 let router = express.Router();
 
@@ -62,6 +62,17 @@ router.post("/task/:task_id/stop", async (req, res) => {
 router.get("/agent/health", async (req, res) => {
     try {
         const agentResponse = await getHealth();
+        return res.status(agentResponse.status).json(agentResponse.body);
+    } catch (error) {
+        return handleError(res, error);
+    }
+});
+
+router.get("/task/:task_id/events", async (req, res) => {
+    const { task_id } = req.params;
+
+    try {
+        const agentResponse = await getevents(task_id);
         return res.status(agentResponse.status).json(agentResponse.body);
     } catch (error) {
         return handleError(res, error);

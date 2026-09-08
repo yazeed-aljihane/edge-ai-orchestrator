@@ -75,3 +75,13 @@ export async function getHealth(): Promise<AgentResponse> {
         };
     
 }
+
+export async function getevents(taskId: string): Promise<AgentResponse> {
+        const response = await fetchWithTimeout(
+          `http://127.0.0.1:8000/task/${encodeURIComponent(taskId)}/events`
+        );
+        return {
+            status: response.status,
+            body: await response.json()
+        };
+}
