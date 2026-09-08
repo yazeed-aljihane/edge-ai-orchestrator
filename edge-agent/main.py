@@ -1,9 +1,17 @@
 import asyncio
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+import psutil
 from asyncio import create_subprocess_exec
 from contextlib import asynccontextmanager
 import json
+
+
+
+tasks = {}
+agent_id = "agent_1"
+
+
 
 async def read_stdout(task_id, process):
     while True:
@@ -24,8 +32,23 @@ async def read_stderr(task_id, process):
         text = line.decode().strip()
         tasks[task_id]["last_error"] = text
 
-tasks = {}
-agent_id = "agent_1" 
+async def monitor_process(task_id, process):
+    system_process = psutil.Process(process.pid)
+    system_process.cpu_percent(None)
+
+    while process.returncode is None:
+        await asyncio.sleep(1)
+
+        if tasks[task_id]["process"] is not process:
+            break
+
+        if process.returncode is not None:
+            break
+
+        tasks[task_id]["last_metrics"] = {
+            "cpu_percent": system_process.cpu_percent(None),
+            "memory_rss_bytes": system_process.memory_info().rss,
+        }
 async def stop_process(task_id):
     process = tasks[task_id].get("process")
     try:
@@ -56,7 +79,24 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get("/health")
 async def health():
-    return {"agent_id": agent_id ,"status": "OK"}
+    active_tasks = sum(
+    1
+    for task in tasks.values()
+    if task["process"].returncode is None
+)
+    active_task_ids = [
+    task_id
+    for task_id, task in tasks.items()
+    if task["process"].returncode is None
+]
+    return {
+  "agent_id": "agent_1",
+  "status": "OK",
+  "cpu_percent": psutil.cpu_percent(),
+  "memory_percent": psutil.virtual_memory().percent,
+  "active_tasks": len(active_task_ids),
+  "active_task_ids": active_task_ids,
+}
 
 @app.post("/task")
 async def process_task(request: dict):
@@ -71,6 +111,7 @@ async def process_task(request: dict):
             return JSONResponse(status_code=200, content={"message": "Task is already running"})
         tasks[task_id]["events"] = []
         tasks[task_id]["last_error"] = None
+        tasks[task_id]["last_metrics"] = None
         tasks[task_id]["stop_requested"] = False
         tasks[task_id]["command"] = command
         tasks[task_id]["process"] = await create_subprocess_exec(*command,stdout=asyncio.subprocess.PIPE,
@@ -82,12 +123,14 @@ async def process_task(request: dict):
             "command": command,
             "events": [],
             "last_error": None,
+            "last_metrics": None,
             "process": await create_subprocess_exec(*command, stdout=asyncio.subprocess.PIPE,
     stderr=asyncio.subprocess.PIPE,)
         }
     process = tasks[task_id]["process"]
     asyncio.create_task(read_stdout(task_id, process))
     asyncio.create_task(read_stderr(task_id, process))
+    asyncio.create_task(monitor_process(task_id, process))
     return {"message": "Task started", "pid": tasks[task_id]["process"].pid}
 
 @app.get("/task/{task_id}")
@@ -99,7 +142,8 @@ async def get_task_status(task_id: int):
     if process.returncode is None:
         if tasks[task_id].get("stop_requested") == True:
             return {"status": "stopping", "pid": process.pid}
-        return {"status": "running", "pid": process.pid}
+        return {"status": "running", "pid": process.pid, "process_metrics": tasks[task_id]["last_metrics"]} 
+    
     elif tasks[task_id].get("stop_requested") == True:
         return {"status": "stopped", "returncode": process.returncode, "pid": process.pid}
     elif process.returncode == 0:
@@ -116,6 +160,7 @@ async def stop_task(task_id: int):
     if process.returncode is None:
         process.terminate()
         tasks[task_id]["stop_requested"] = True
+        asyncio.create_task(stop_process(task_id))
         return { "status": "STOPPING", "pid": process.pid}
     else:
         status = ""
@@ -134,3 +179,30 @@ async def get_task_events(task_id: int):
     
     events = tasks[task_id].get("events", [])
     return {"events": events}
+
+@app.get("/tasks")
+async def get_all_tasks():
+    all_tasks = []
+
+    for task_id, task in tasks.items():
+        process = task["process"]
+
+        if process.returncode is None:
+            status = "stopping" if task["stop_requested"] else "running"
+        elif task["stop_requested"]:
+            status = "stopped"
+        elif process.returncode == 0:
+            status = "completed"
+        else:
+            status = "failed"
+
+        all_tasks.append({
+            "task_id": task_id,
+            "status": status,
+            "pid": process.pid,
+            "returncode": process.returncode,
+            "last_error": task["last_error"],
+            "process_metrics": task["last_metrics"],
+        })
+
+    return {"tasks": all_tasks}

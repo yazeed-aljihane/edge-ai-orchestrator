@@ -85,3 +85,12 @@ export async function getevents(taskId: string): Promise<AgentResponse> {
             body: await response.json()
         };
 }
+
+
+export async function getAllTasks(): Promise<AgentResponse> {
+        const response = await fetchWithTimeout(`http://127.0.0.1:8000/tasks`);
+        return {
+            status: response.status,
+            body: await response.json()
+        };
+}
