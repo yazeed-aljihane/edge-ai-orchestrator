@@ -1,4 +1,4 @@
-# RIME — Edge AI Orchestrator
+# Edge AI Orchestrator
 
 A local learning MVP for operating an Edge device through an AI assistant and an Arabic RTL operations interface. Ask about the device, discover video files, start analysis, inspect progress and events, or stop a task.
 
