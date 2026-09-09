@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
-:root { font-family: 'IBM Plex Sans Arabic', Arial, sans-serif; color: #172033; background: #f5f7fa; font-synthesis: none; }
+:root { font-family: 'IBM Plex Sans Arabic', Arial, sans-serif; color: #14203a; background: #fafaf7; font-synthesis: none; }
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; background: #f5f7fa; }
+body { margin: 0; min-width: 320px; background: #fafaf7; }
 button, input { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: wait; opacity: .6; }

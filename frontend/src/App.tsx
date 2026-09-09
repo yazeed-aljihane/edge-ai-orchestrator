@@ -1,11 +1,12 @@
 import { apiFetch, setOperatorToken } from './api';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Operations from './Operations';
+import EdgeContext from './EdgeContext';
 import './chat.css';
 
 type Message = { role: 'user' | 'assistant'; content: string; toolCalls?: { toolName: string; input: unknown }[] };
-const toolLabels: Record<string, string> = { get_agent_health: 'فحص حالة الجهاز', list_tasks: 'عرض المهام', get_task_status: 'فحص حالة المهمة', get_task_events: 'قراءة أحداث المهمة', stop_task: 'طلب إيقاف المهمة', start_video_analysis: 'طلب تحليل الفيديو' };
-const suggestions = [ ['01', 'كيف وضع الجهاز؟', 'افحص حالة جهاز الإيدج واستهلاك الموارد.'], ['02', 'وش المهام الحالية؟', 'اعرض المهام الحالية وحالة كل مهمة.'], ['03', 'حلّل مقطع فيديو', 'أريد تحليل فيديو. ما المعلومات التي تحتاجها؟'] ];
+const toolLabels: Record<string, string> = { get_agent_health: 'فحص حالة الجهاز', list_tasks: 'عرض المهام', list_videos: 'عرض المقاطع', get_task_status: 'فحص حالة المهمة', get_task_events: 'قراءة أحداث المهمة', stop_task: 'طلب إيقاف المهمة', start_video_analysis: 'طلب تحليل الفيديو' };
+const suggestions = [ ['حالة الإيدج', 'افحص حالة جهاز الإيدج واستهلاك الموارد.'], ['المهام الحالية', 'اعرض المهام الحالية وحالة كل مهمة.'], ['تحليل فيديو', 'اعرض المقاطع المتاحة ثم ساعدني في بدء تحليل أحدها.'] ];
 
 export default function App() {
   const [checkingAccess, setCheckingAccess] = useState(true);
@@ -73,23 +74,23 @@ export default function App() {
 
   return <div className="rime" dir="rtl">
     <aside className="rail">
-      <a className="brand" href="#" onClick={e => { e.preventDefault(); setView('chat'); }} aria-label="RIME الرئيسية"><span className="brand-mark">r.</span><strong>rime<span>EDGE INTELLIGENCE</span></strong></a>
+      <a className="brand" href="#" onClick={e => { e.preventDefault(); setView('chat'); }} aria-label="RIME الرئيسية"><span className="brand-mark">R</span><strong>RIME<span>EDGE INTELLIGENCE</span></strong></a>
       <button className="new-chat" disabled={pending} onClick={() => { setMessages([]); setError(''); setDraft(''); setView('chat'); input.current?.focus(); }}><span>＋</span> محادثة جديدة</button>
       <p className="nav-label">مساحة العمل</p>
-      <nav aria-label="التنقل الرئيسي"><button className={view === 'chat' ? 'selected' : ''} onClick={() => setView('chat')}><span>◉</span> المساعد <small>AI</small></button><button className={view === 'operations' ? 'selected' : ''} onClick={() => setView('operations')}><span>▤</span> العمليات</button></nav>
+      <nav aria-label="التنقل الرئيسي"><button className={view === 'chat' ? 'selected' : ''} onClick={() => setView('chat')}><span>⌁</span> المساعد <small>AI</small></button><button className={view === 'operations' ? 'selected' : ''} onClick={() => setView('operations')}><span>▤</span> العمليات</button></nav>
       <div className="rail-footer"><div className="device-icon">▣</div><div><strong>Edge Agent</strong><span><i className={`live-dot ${online === false ? 'offline' : online === null ? 'checking' : ''}`} />{online === null ? 'جارٍ فحص الاتصال' : online ? 'الجهاز متصل' : 'الجهاز غير متصل'}</span></div></div>
     </aside>
     <div className="main-surface">
       <header className="chat-header"><div>{view === 'chat' ? 'المساعد' : 'العمليات'}<span>/</span><strong>{view === 'chat' ? 'محادثة مع الإيدج' : 'المهام والأحداث'}</strong></div><span className="workspace-label">RIME WORKSPACE <span className="tiny-square" /></span></header>
-      {view === 'operations' ? <div className="operations-view"><Operations onAskAssistant={prompt => { setDraft(prompt); setView('chat'); window.setTimeout(() => input.current?.focus(), 0); }} /></div> : <main className={`chat-main ${messages.length ? 'has-messages' : ''}`}>
+      {view === 'operations' ? <div className="operations-view"><Operations onAskAssistant={prompt => { setDraft(prompt); setView('chat'); window.setTimeout(() => input.current?.focus(), 0); }} /></div> : <div className="assistant-workspace"><main className={`chat-main ${messages.length ? 'has-messages' : ''}`}>
         <div className="conversation">
-          {messages.length === 0 ? <section className="welcome"><div className="assistant-emblem">✳</div><p className="intro-label">أقرب لجهازك.</p><h1>وش ننجز اليوم؟</h1><p className="welcome-copy">اسأل عن جهازك، تابع مهامك، أو ابدأ تحليل فيديو.<br />مساعدك يتولى التفاصيل.</p><div className="suggestions">{suggestions.map(([number, title, prompt]) => <button key={number} onClick={() => { setDraft(prompt!); input.current?.focus(); }}><span className="suggestion-number">{number}</span><strong>{title}</strong><span className="suggestion-arrow">↖</span></button>)}</div></section> : <div className="message-list" role="log" aria-label="رسائل المحادثة" aria-live="polite">{messages.map((message, index) => <article className={`chat-message ${message.role}`} key={index}><div className="message-author">{message.role === 'assistant' ? <><span className="mini-emblem">✳</span> مساعد RIME</> : 'أنت'}</div><div className="message-content" dir="auto">{message.content}</div>{!!message.toolCalls?.length && <details className="tool-details"><summary>الأدوات المستخدمة · {message.toolCalls.length}</summary>{message.toolCalls.map((tool, i) => <div className="tool-row" key={i}><span>↳ {toolLabels[tool.toolName] ?? tool.toolName}</span><pre dir="ltr">{JSON.stringify(tool.input, null, 2)}</pre></div>)}</details>}</article>)}</div>}
+          {messages.length === 0 ? <section className="welcome"><div className="assistant-emblem">✦</div><p className="intro-label">مساعد عمليات الإيدج</p><h1>وش تحتاج تعرف<br />عن جهازك اليوم؟</h1><p className="welcome-copy">اسأل، شغّل التحليل، وراجع النتائج من مكان واحد.</p><div className="suggestions">{suggestions.map(([title, prompt]) => <button key={title} onClick={() => { setDraft(prompt!); input.current?.focus(); }}><span className="suggestion-glyph">↖</span><strong>{title}</strong></button>)}</div></section> : <div className="message-list" role="log" aria-label="رسائل المحادثة" aria-live="polite">{messages.map((message, index) => <article className={`chat-message ${message.role}`} key={index}><div className="message-author">{message.role === 'assistant' ? <><span className="mini-emblem">✦</span> مساعد RIME</> : 'أنت'}</div><div className="message-content" dir="auto">{message.content}</div>{!!message.toolCalls?.length && <details className="tool-details"><summary>الأدوات المستخدمة · {message.toolCalls.length}</summary>{message.toolCalls.map((tool, i) => <div className="tool-row" key={i}><span>↳ {toolLabels[tool.toolName] ?? tool.toolName}</span><pre dir="ltr">{JSON.stringify(tool.input, null, 2)}</pre></div>)}</details>}</article>)}</div>}
           {pending && <div className="thinking" role="status"><span className="mini-emblem">✳</span> جارٍ معالجة طلبك<span className="loading-dots">•••</span></div>}
           {error && <div className="chat-error" role="alert">{error}</div>}
           <div ref={bottom} />
         </div>
         <div className="composer-area"><form className="composer" onSubmit={send}><label className="sr-only" htmlFor="chat-input">رسالتك للمساعد</label><textarea id="chat-input" ref={input} dir="auto" rows={2} maxLength={4000} value={draft} onChange={e => setDraft(e.target.value)} placeholder="اسأل مساعدك أو اطلب منه تنفيذ مهمة…" onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} /><div className="composer-bottom"><span><span className="mini-spark">✳</span> مساعد الإيدج</span><button className="send-button" type="submit" disabled={pending || !draft.trim()} aria-label="إرسال الرسالة">↑</button></div></form><div className="composer-note"><span>تحقق من النتائج قبل اتخاذ قراراتك.</span><span>Enter للإرسال · Shift + Enter لسطر جديد</span></div></div>
-      </main>}
+      </main><EdgeContext onOpenOperations={() => setView('operations')} onAsk={prompt => { setDraft(prompt); window.setTimeout(() => input.current?.focus(), 0); }} /></div>}
     </div>
   </div>;
 }

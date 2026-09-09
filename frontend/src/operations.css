@@ -18,3 +18,42 @@
 .ops-progress { margin: 12px 0; white-space: normal; min-width: 160px; }
 .ops-progress progress { width: 120px; height: 7px; accent-color: #52764a; margin-inline-end: 8px; }
 .ops-progress-note { font: 12px/1.8 'IBM Plex Sans Arabic', sans-serif; color: #6d7c69; margin: 5px 0; }
+
+/* RIME presentation theme */
+.ops.app-shell { color: #14203a; }
+.ops .eyebrow { color: #f2762e; }
+.ops .subtitle, .ops .section-kicker, .ops-footer, .ops-progress-note { color: #7a8090; }
+.ops .connection { border-color: #e7e5de; background: #fff; border-radius: 4px; }
+.ops .connection.online { color: #24704f; border-color: #bcd8ca; background: #f4faf6; }
+.ops-assistant { border-color: #e7e5de; border-radius: 4px; background: #fff; }
+.ops-assistant .mini-emblem { color: #f2762e; border-color: #e7e5de; border-radius: 3px; background: #fff8f3; }
+.ops-assistant p { color: #7a8090; }
+.ops-assistant button { border-color: #f2762e; border-radius: 4px; background: #f2762e; color: #fff; }
+.ops-assistant button:hover { background: #d95f19; }
+.ops .metrics, .ops .tasks-panel, .ops .details-panel { border-color: #e7e5de; border-radius: 4px; }
+.ops .metric { border-color: #e7e5de; }
+.ops .metric p { color: #7a8090; }
+.ops .metric strong { color: #14203a; }
+.ops .metric-accent.blue, .ops .metric-accent.orange { background: #f2762e; }
+.ops .metric-accent.green { background: #2e9a69; }
+.ops .metric-accent.red { background: #c9553f; }
+.ops-count { border-radius: 3px; background: #fff3eb; color: #d95f19; }
+.ops .icon-button, .ops .close-button { border-color: #d8d5cd; border-radius: 4px; color: #455066; }
+.ops th { border-color: #e7e5de; background: #f6f5f0; color: #7a8090; }
+.ops td { border-color: #eeece6; color: #455066; }
+.ops tbody tr:hover { background: #fffaf7; }
+.ops .task-id, .ops-explain { color: #d95f19; }
+.ops .status.running { background: #fff0e7; color: #c75412; }
+.ops .status.completed { background: #eef8f2; color: #24704f; }
+.ops .stop-button { border-color: #e9c7b8; border-radius: 4px; color: #a64b2f; }
+.ops .details-grid div { border-color: #e7e5de; border-radius: 4px; background: #f7f6f2; }
+.ops .details-grid dd, .ops .events-title, .ops .event-copy strong { color: #14203a; }
+.ops .event-dot { background: #f2762e; }
+.ops .event-dot.complete { background: #2e9a69; }
+.ops-notice { border-color: #f0d0bd; border-radius: 4px; background: #fff7f2; color: #8f492b; }
+.ops-advanced { border-color: #e7e5de; border-radius: 4px; background: #f6f5f0; }
+.ops-advanced summary, .ops-advanced label { color: #455066; }
+.ops-advanced input { border-color: #d8d5cd; border-radius: 4px; }
+.ops-advanced input:focus { border-color: #f2762e; box-shadow: 0 0 0 3px rgba(242,118,46,.1); }
+.ops-advanced .primary-button { border-radius: 4px; background: #f2762e; }
+.ops-progress progress { accent-color: #f2762e; }
